@@ -15,7 +15,7 @@ fun Application.module() {
             findAndRegisterModules()
         }
     }
-    DatabaseFactory.init()
+
     configureRouting()
 }
 

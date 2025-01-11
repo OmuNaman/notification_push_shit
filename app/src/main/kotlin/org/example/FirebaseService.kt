@@ -26,8 +26,7 @@ object FirebaseService {
 
     fun sendNotification(userIdToSendTo: String) {
         try {
-            DatabaseFactory.init()
-
+            
             val tokens = FcmTokenDao.findByUserId(userIdToSendTo)
             if (tokens.isNotEmpty()) {
                 tokens.forEach { token ->
