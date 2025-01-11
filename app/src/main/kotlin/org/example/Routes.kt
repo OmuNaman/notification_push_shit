@@ -21,7 +21,14 @@ fun Application.module() {
 
 data class TokenRegistrationRequest(
     val userId: String,
-    val fcmToken: String
+    val fcmToken: String,
+    val subscribedTopic: String? = null
+)
+
+data class UpdateTopicRequest(
+    val userId: String,
+    val fcmToken: String,
+    val newTopic: String?
 )
 
 fun Application.configureRouting() {
@@ -30,13 +37,11 @@ fun Application.configureRouting() {
         post("/register") {
             val registration = call.receive<TokenRegistrationRequest>()
             log.info("Received registration request: $registration")
+
             val existingToken = FcmTokenDao.findByUserIdAndFcmToken(registration.userId, registration.fcmToken)
             if (existingToken == null) {
-                FcmTokenDao.create(registration.userId, registration.fcmToken)
+                FcmTokenDao.create(registration.userId, registration.fcmToken, registration.subscribedTopic)
                 call.respond(HttpStatusCode.Created)
-
-                // Send a notification after registration (for testing)
-                FirebaseService.sendNotification(registration.userId)
             } else {
                 call.respond(HttpStatusCode.OK, "Token already registered")
             }
@@ -48,5 +53,18 @@ fun Application.configureRouting() {
             FcmTokenDao.deactivateToken(logoutRequest.userId, logoutRequest.fcmToken)
             call.respond(HttpStatusCode.OK)
         }
+        post("/updateTopic") {
+            val updateTopicRequest = call.receive<UpdateTopicRequest>()
+            log.info("Received update topic request: $updateTopicRequest")
+
+            val existingToken = FcmTokenDao.findByUserIdAndFcmToken(updateTopicRequest.userId, updateTopicRequest.fcmToken)
+            if (existingToken != null) {
+                FcmTokenDao.updateSubscribedTopic(updateTopicRequest.userId, updateTopicRequest.fcmToken, updateTopicRequest.newTopic)
+                call.respond(HttpStatusCode.OK, "Topic updated")
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Token not found")
+            }
+        }
+        
     }
 }

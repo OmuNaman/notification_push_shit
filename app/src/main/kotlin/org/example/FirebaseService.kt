@@ -52,4 +52,33 @@ object FirebaseService {
             e.printStackTrace()
         }
     }
+
+    fun sendNotificationToTopic(topic: String, title: String, body: String) {
+        try {
+            DatabaseFactory.init()
+
+            val tokens = FcmTokenDao.findBySubscribedTopic(topic)
+            if (tokens.isNotEmpty()) {
+                tokens.forEach { token ->
+                    val message = Message.builder()
+                        .setNotification(
+                            Notification.builder()
+                                .setTitle(title)
+                                .setBody(body)
+                                .build()
+                        )
+                        .setToken(token.fcmToken) // Send to individual tokens
+                        .build()
+
+                    val response = FirebaseMessaging.getInstance().send(message)
+                    log.info("Successfully sent message to ${token.userId} with token ${token.fcmToken} subscribed to $topic: $response")
+                }
+            } else {
+                log.info("No active tokens found for topic $topic")
+            }
+        } catch (e: Exception) {
+            log.error("Error sending notification to topic: ${e.message}")
+            e.printStackTrace()
+        }
+    }
 }

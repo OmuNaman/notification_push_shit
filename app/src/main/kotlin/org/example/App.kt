@@ -11,10 +11,15 @@ import io.ktor.server.netty.*
 import org.slf4j.LoggerFactory
 import java.io.FileInputStream
 
+// In App.kt (for temporary testing only)
 fun main() {
-    // Start Ktor server
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
+    // Example: Send a notification on startup (for testing)
+    val topic = "sports"
+    val title = "New Sports News!"
+    val body = "Check out the latest scores and updates."
+    FirebaseService.sendNotificationToTopic(topic, title, body)
 }
 
 // This function is now separate and can be called when you want to send a notification

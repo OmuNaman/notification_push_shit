@@ -8,12 +8,13 @@ import java.time.LocalDateTime
 object FcmTokenDao {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun create(userId: String, fcmToken: String) {
+    fun create(userId: String, fcmToken: String, subscribedTopic: String? = null) {
         transaction {
             FcmTokens.insert {
                 it[FcmTokens.userId] = userId
                 it[FcmTokens.fcmToken] = fcmToken
                 it[isActive] = true
+                it[userSubscribedTopic] = subscribedTopic // Set the topic
                 it[createdAt] = LocalDateTime.now()
                 it[updatedAt] = LocalDateTime.now()
             }
@@ -47,6 +48,16 @@ object FcmTokenDao {
         }
     }
 
+    fun updateSubscribedTopic(userId: String, fcmToken: String, subscribedTopic: String?) {
+        transaction {
+            FcmTokens.update({ FcmTokens.userId eq userId and (FcmTokens.fcmToken eq fcmToken) }) {
+                it[userSubscribedTopic] = subscribedTopic
+                it[updatedAt] = LocalDateTime.now()
+            }
+            log.info("Subscribed topic updated for user $userId")
+        }
+    }
+
     fun deactivateToken(userId: String, fcmToken: String) {
         transaction {
             FcmTokens.update({ FcmTokens.userId eq userId and (FcmTokens.fcmToken eq fcmToken) }) {
@@ -74,11 +85,19 @@ object FcmTokenDao {
         }
     }
 
+    fun findBySubscribedTopic(topic: String): List<FcmToken> {
+        return transaction {
+            FcmTokens.select { FcmTokens.userSubscribedTopic eq topic and (FcmTokens.isActive eq true) }
+                .map { it.toFcmToken() }
+        }
+    }
+
     private fun ResultRow.toFcmToken(): FcmToken =
         FcmToken(
             userId = this[FcmTokens.userId],
             fcmToken = this[FcmTokens.fcmToken],
             isActive = this[FcmTokens.isActive],
+            subscribedTopic = this[FcmTokens.userSubscribedTopic], // Include topic
             createdAt = this[FcmTokens.createdAt],
             updatedAt = this[FcmTokens.updatedAt]
         )
@@ -88,6 +107,7 @@ data class FcmToken(
     val userId: String,
     val fcmToken: String,
     val isActive: Boolean,
+    val subscribedTopic: String?, 
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
