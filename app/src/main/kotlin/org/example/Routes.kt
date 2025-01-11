@@ -34,6 +34,9 @@ fun Application.configureRouting() {
             if (existingToken == null) {
                 FcmTokenDao.create(registration.userId, registration.fcmToken)
                 call.respond(HttpStatusCode.Created)
+
+                // Send a notification after registration (for testing)
+                FirebaseService.sendNotification(registration.userId)
             } else {
                 call.respond(HttpStatusCode.OK, "Token already registered")
             }

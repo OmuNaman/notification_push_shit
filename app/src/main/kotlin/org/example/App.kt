@@ -12,17 +12,6 @@ import org.slf4j.LoggerFactory
 import java.io.FileInputStream
 
 fun main() {
-    // Initialize Firebase
-    val serviceAccount = FileInputStream("app/serviceAccountKey.json")
-
-    val options = FirebaseOptions.builder()
-        .setCredentials(com.google.auth.oauth2.GoogleCredentials.fromStream(serviceAccount))
-        .build()
-
-    if (FirebaseApp.getApps().isEmpty()) {
-        FirebaseApp.initializeApp(options)
-    }
-
     // Start Ktor server
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
